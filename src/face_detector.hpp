@@ -19,7 +19,7 @@ class FaceDetector
  public:
   FaceDetector();
   void Init(const std::string& cascade_file, bool gpu);
-  bool Detect(const char* image_file, std::vector<cv::Rect>& face_rects);
+  bool Detect(const cv::Mat frame, std::vector<cv::Rect>& face_rects);
  private:
   bool gpu_;
   std::string cascade_file_;

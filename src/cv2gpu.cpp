@@ -2,7 +2,10 @@
 #include <string>
 #include <vector>
 
+#include <Python.h>
+#include "numpy/ndarrayobject.h"
 #include "opencv_version.hpp"
+
 #ifdef OPENCV_2
   #include <opencv2/core/gpumat.hpp> // gpu::getCudaEnabledDeviceCount
 #else
@@ -58,13 +61,32 @@ static PyObject* init_cpu_detector(PyObject* self, PyObject* args)
 
 static PyObject* find_faces(PyObject* self, PyObject* args)
 {
-  const char* image_path;
   if (init)
   {
-    if (PyArg_ParseTuple(args, "s", &image_path))
+    PyObject *size;
+    PyArrayObject *image;
+
+    if (PyArg_UnpackTuple(args, "ref", 1, 2, &size, &image))
     {
+	    
+      int rows = PyLong_AsLong(PyTuple_GetItem(size ,0));
+      int cols = PyLong_AsLong(PyTuple_GetItem(size ,1));
+      int nchannels = PyLong_AsLong(PyTuple_GetItem(size ,2));
+	
+      std::cout << "Rows: " << rows << std::endl;
+      std::cout << "Cols: " << cols << std::endl;
+      std::cout << "Channels: " << nchannels << std::endl;
+      
+      char my_arr[rows * nchannels * cols];
+
+      for(size_t length = 0; length<(rows * nchannels * cols); length++){
+	my_arr[length] = (*(char *)PyArray_GETPTR1(image, length));
+      }
+
+      cv::Mat img = cv::Mat(cv::Size(cols, rows), CV_8UC3, &my_arr);
+
       std::vector<cv::Rect> face_rects;
-      detector.Detect(image_path, face_rects);
+      detector.Detect(img, face_rects);
       if (face_rects.empty())
       {
         // No faces
@@ -83,6 +105,8 @@ static PyObject* find_faces(PyObject* self, PyObject* args)
         PyList_SetItem(face_list, i, face_rect);
       }
       return face_list;
+      
+      std::cout << "yep" << std::endl;
     }
     std::cout << "Error: Problem parsing image path" << std::endl;
     return PyList_New(0);

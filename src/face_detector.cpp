@@ -34,10 +34,11 @@ void FaceDetector::Init(const std::string& cascade_file, bool gpu)
   gpu_ = gpu;
 }
 
-bool FaceDetector::Detect(const char* image_file,
+bool FaceDetector::Detect(const cv::Mat color,
                           std::vector<cv::Rect>& face_rects)
 {
-  cv::Mat frame = cv::imread(image_file, 0);
+  cv::Mat frame; // = cv::imread(image_file, 0);
+  cv::cvtColor(color, frame, CV_BGR2GRAY);
   cv::equalizeHist(frame, frame);
   static std::once_flag load_flag;
   if (cascade_file_.empty())
